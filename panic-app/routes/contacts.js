@@ -5,14 +5,27 @@ var sessionUtils = require('../utils/session-checker.util');
 var responseHandler = require('../utils/response-handler.util');
 const contactController = require('../controllers/contact-controller');
 
+const E164_REGEX = /^\+[1-9]\d{10,14}$/; // Expresión regular para validar número telefónico (formato E.164)
+
 // Registra un contacto de confianza asociado a un usuario
 router.post('/register', sessionUtils.validateSession, (req, res , next)=>{
   var userId = req.session.userId;
 
   // Valida los parámetros de entrada
-  if(!req.body.contactPhone || !req.body.contactName || isNaN(req.body.contactPhone)){
+  if(!req.body.contactPhone || !req.body.contactName){
     responseHandler.sendResponse(req, res, next, 400, 'Incorrect request parameters');
     return;
+  }
+
+  // Valida el formato teléfonico
+  // Si no tiene código de país, agrega el código de país de México (+52)
+  if(!E164_REGEX.test(req.body.contactPhone)){
+    if(req.body.contactPhone[0] !== '+')
+      req.body.contactPhone = '+52' + req.body.contactPhone;
+    if(!E164_REGEX.test(req.body.contactPhone)){
+      responseHandler.sendResponse(req, res, next, 400, 'Invalid phone number');
+      return;
+    }
   }
 
   // Valida que el teléfono del contacto de confianza no esté ya registrado para un mismo usuario
@@ -88,7 +101,106 @@ router.post('/register', sessionUtils.validateSession, (req, res , next)=>{
 router.post('/edit', sessionUtils.validateSession, (req, res , next)=>{
   var userId = req.session.userId;
 
-  // ----------------   PENDIENTE
+  // Valida los parámetros de entrada
+  if(!req.body.previousPhone || !req.body.contactName || !req.body.newPhone){
+    responseHandler.sendResponse(req, res, next, 400, 'Incorrect request parameters');
+    return;
+  }
+
+  var prevPhone = req.body.previousPhone;
+  var newPhone = req.body.newPhone;
+  var contactName = req.body.contactName; 
+
+  // Valida el formato teléfonico
+  // Si no tiene código de país, agrega el código de país de México (+52)
+  if(!E164_REGEX.test(prevPhone)){
+    if(prevPhone[0] !== '+')
+      prevPhone = '+52' + prevPhone;
+    if(!E164_REGEX.test(prevPhone)){
+      responseHandler.sendResponse(req, res, next, 400, 'Invalid phone number');
+      return;
+    }
+  }
+    
+  if(!E164_REGEX.test(newPhone)){
+    if(newPhone[0] !== '+')
+      newPhone = '+52' + newPhone;
+    if(!E164_REGEX.test(newPhone)){
+      responseHandler.sendResponse(req, res, next, 400, 'Invalid phone number');
+      return;
+    }
+  }
+    
+  // Obtiene el contacto de confianza asociado al número telefónico
+  contactController.getContact(userId, prevPhone).then(async(contact) => {
+    
+    if(contact.length === 0){ // Si no se encuentra el contacto en BD
+      responseHandler.sendResponse(req, res, next, 400, 'Non-existent contact');
+      return;
+    }
+
+    // Si se modificó el número, verifica que el nuevo número no esté ya registrado
+    if(prevPhone != newPhone){
+      var alreadyRegistered = await contactController.getContact(userId, newPhone);
+
+      if(alreadyRegistered.length > 0){
+        responseHandler.sendResponse(req, res, next, 400, 'A trusted contact with the phone number submitted already exists');
+        return;
+      }
+    }
+
+    // Actualiza el contacto con los nuevos valores
+    contact[0].name = contactName;
+    contact[0].phone = newPhone;
+    await contact[0].save();
+    responseHandler.sendResponse(req,res,next, 200, 'Contact updated');
+  })
+  .catch((error) => {
+    console.log(error);
+    responseHandler.sendResponse(req,res,next, 500, 'Failed to retrieve record from database');
+  });
+
+});
+
+// Registra un contacto de confianza asociado a un usuario
+router.delete('/:contactPhone', sessionUtils.validateSession, (req, res , next)=>{
+  var userId = req.session.userId;
+
+  // Valida los parámetros de entrada
+  if(!req.params.contactPhone){
+    responseHandler.sendResponse(req, res, next, 400, 'Incorrect request parameters');
+    return;
+  }
+
+  // Valida el formato teléfonico
+  // Si no tiene código de país, agrega el código de país de México (+52)
+  if(!E164_REGEX.test(req.params.contactPhone)){
+    if(req.params.contactPhone[0] !== '+')
+      req.params.contactPhone = '+52' + req.params.contactPhone;
+    if(!E164_REGEX.test(req.params.contactPhone)){
+      responseHandler.sendResponse(req, res, next, 400, 'Invalid phone number');
+      return;
+    }
+  }
+
+  // Obtiene el contacto asociado al número telefónico
+  contactController.getContact(userId, req.params.contactPhone).then(async(contact) => {
+    if(contact.length === 0){ // Si no se encuentra el contacto en BD
+      responseHandler.sendResponse(req, res, next, 400, 'Non-existent contact');
+      return;
+    }
+
+    // Elimina el contacto
+    await contact[0].destroy();
+    responseHandler.sendResponse(req, res, next, 200, 'Contact deleted');
+  })
+  .catch((error) => {
+    console.log(error);
+    responseHandler.sendResponse(req,res,next, 500, 'Failed to retrieve record from database');
+  });
+
+
+
 });
 
 module.exports = router;

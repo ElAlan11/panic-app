@@ -87,4 +87,35 @@ router.post('/logout',(req,res,next) => {
   }
 });
 
+// Servicio para cambiar la contraseña del usuario
+router.post('/password', async (req, res , next)=>{
+  const userEmail = req.session.user;
+
+  // Validación de parámetros
+  if(!req.body.oldPassword || !req.body.newPassword){
+    responseHandler.sendResponse(req,res,next, 400, 'Missing required values');
+    return;
+  }
+
+  // Busca al usuario en BD por correo electrónico
+  var user = await userController.getUserByEmail(userEmail);
+
+  if(user.length > 0){  // Si el usuario existe en BDD
+    
+    if(user[0].password === req.body.oldPassword){ // Valida la contraseña anterior
+
+      // Guarda la nueva contraseña en BDD
+      user[0].password = req.body.newPassword;
+      user[0].save();
+      responseHandler.sendResponse(req,res,next, 200, 'Password updated');
+    }
+    else
+      responseHandler.sendResponse(req,res,next, 400, 'The old password is incorrect');
+  }
+  else{
+    // Si no existe el usuario en BDD
+    responseHandler.sendResponse(req,res,next, 401, 'User not found');
+  }
+});
+
 module.exports = router;

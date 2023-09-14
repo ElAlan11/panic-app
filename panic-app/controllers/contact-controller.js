@@ -29,5 +29,14 @@ module.exports = {
                 where: { id: contactId }
             });
     },
+    // Busca un contacto por número telefónico y ID usuario
+    getContact(userId, phone){
+        return Contact.findAll({
+            where: {
+                user_id: userId,
+                phone: phone
+            }
+        })
+    },
 
 };
