@@ -7,7 +7,8 @@ module.exports = {
         return User.findAll({
             attributes: ['id', 'email', 'password'],
             where: {
-                email: reqEmail
+                email: reqEmail,
+                disabled: false
             }
         })
     },

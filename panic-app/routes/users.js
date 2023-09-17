@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 const userController = require('../controllers/user-controller');
 var responseHandler = require('../utils/response-handler.util');
+const { randomUUID } = require('crypto');
 
 /**
  * Servicio para iniciar sesión en la aplicación 
@@ -111,6 +112,28 @@ router.post('/password', async (req, res , next)=>{
     }
     else
       responseHandler.sendResponse(req,res,next, 400, 'The old password is incorrect');
+  }
+  else{
+    // Si no existe el usuario en BDD
+    responseHandler.sendResponse(req,res,next, 401, 'User not found');
+  }
+});
+
+
+// Servicio para desactivar usuario
+router.delete('/deactivate', async (req, res , next)=>{
+  const userEmail = req.session.user;
+
+  // Busca al usuario en BD por correo electrónico
+  var user = await userController.getUserByEmail(userEmail);
+
+  if(user.length > 0){
+    // Desactiva el usuario
+    user[0].disabled = true;
+    user[0].email = user[0].email + '/'+randomUUID()+'/disabled';
+    user[0].save();
+    req.session.destroy();
+    responseHandler.sendResponse(req,res,next, 200, 'User deactivated');
   }
   else{
     // Si no existe el usuario en BDD

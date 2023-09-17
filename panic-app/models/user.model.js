@@ -48,6 +48,9 @@ module.exports = (sequelize, DataTypes) => {
     },
     phone: {
       type: DataTypes.STRING(20)
+    },
+    disabled: {
+      type: DataTypes.BOOLEAN
     }
   }, {
     sequelize,
