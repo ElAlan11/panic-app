@@ -3,7 +3,7 @@ const { Op } = require('sequelize');
 const Incident = require('../models').Incident;
 
 module.exports = {
-    // Obtiene los contactos de confianza relacionados a un usuario
+    // Busca incidentes por ID
     getIncident(incidentId){
         return Incident.findAll({
             where: {
@@ -11,7 +11,7 @@ module.exports = {
             }
         })
     },
-    //Crea un nuevo contacto de confianza y lo asocia a un usuario
+    //Crea un nuevo incidente
     create(reqData, userId) {
         return Incident
             .create({
@@ -22,7 +22,7 @@ module.exports = {
                 longitude: reqData.longitude
             });
     },
-    // Obtiene los contactos de confianza relacionados a un usuario
+    // Actualiza los datos de geolocalización para un incidente
     updateLocation(incidentId, lat, lon){
         return Incident
             .update({ 
@@ -32,7 +32,7 @@ module.exports = {
                 where: { id: incidentId }
             });
     },
-    // Actualiza el estado y ubicación de fotos
+    // Actualiza el estado a terminado y guarda la ruta de las evidencias
     updateStatusF(incidentId, photosFolder, audioKey){
         return Incident
             .update({ 
@@ -53,7 +53,7 @@ module.exports = {
                 where: { id: incidentId }
             });
     },
-    // Obtiene los reportes de incidentes dentro cierta area
+    // Obtiene los reportes de incidentes dentro de cierta area
     getIncidentsInArea(maxLatNorth, maxLatSouth, maxLongEast, maxLongWest){
         return Incident.findAll({
             attributes: ['id','initial_latitude', 'initial_longitude', 'createdAt', 'description', 'finished'],

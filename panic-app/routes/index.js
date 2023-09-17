@@ -4,7 +4,7 @@ var router = express.Router();
 
 // router.use(sessionUtils.validateSession);
 
-// Servicio random de pruebas BORRAR
+// Servicio para probar funcionamiento y conectividad con el middleware
 router.get('/', sessionUtils.validateSession, function(req, res, next) {
 
   res.json({

@@ -33,7 +33,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 
-const sessionMaxAge = 1000 * 60 * 60 * 12; //12 hours - MOVER A CONFIGURACIÓN BD
+const sessionMaxAge = 1000 * 60 * 60 * 24; // La sesión expira en 24 horas
 const sessionStore = new mySQLStore(config);
 
 app.use(sessions({

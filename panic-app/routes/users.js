@@ -20,7 +20,7 @@ router.post('/login', async (req, res , next)=>{
   // Busca al usuario en BD por correo electrónico
   var user = await userController.getUserByEmail(req.body.email);
 
-  if(user.length > 0){  // Si el usuario existe en BDD...
+  if(user.length > 0){  // Si el usuario existe en BDD
     
     if(user[0].password === req.body.password){ // Valida la contraseña
       var session = req.session;
@@ -55,19 +55,27 @@ router.post('/register', (req, res , next)=>{
   userController.getUserByEmail(req.body.email).then((user) => {
     console.log(user);
 
-    if(user.length > 0){ // Si el contacto ya está registrado...
+    if(user.length > 0){ // Si el contacto ya está registrado
       responseHandler.sendResponse(req, res, next, 400, 'The email submitted already exists for another user');
     }
-    else { // Si el contacto no está registrado...
-      userController.create(req).then((resp) => { // Si el usuario se creó correctamente...
+    else { // Si el contacto no está registrado
+      userController.create(req).then((userCreated) => { // Si el usuario se creó correctamente
+        // Inicia una sesión para el usuario recién creado
+        var session = req.session;
+        // Guarda el correo y ID del usuario en la sesión del usuario
+        session.user = userCreated.email;
+        session.userId = userCreated.id;
+
         responseHandler.sendResponse(req,res,next, 200, 'User created successfully');
       }).catch((error) => {
-        var errMsg = "Failed to insert record to database: " + error.original.code;
+        console.log(error)
+        var errMsg = "Failed to insert record to database";
         responseHandler.sendResponse(req,res,next, 500, errMsg);
       });
     }
   }).catch((error) => {
-    var resMsg = "Failed to retrieve record from database: " + error.original.code;
+    console.log(error)
+    var resMsg = "Failed to retrieve record from database";
     responseHandler.sendResponse(req,res,next, 500, resMsg);
   });
 
@@ -115,7 +123,7 @@ router.post('/password', async (req, res , next)=>{
   }
   else{
     // Si no existe el usuario en BDD
-    responseHandler.sendResponse(req,res,next, 401, 'User not found');
+    responseHandler.sendResponse(req,res,next, 400, 'User not found');
   }
 });
 
@@ -137,7 +145,7 @@ router.delete('/deactivate', async (req, res , next)=>{
   }
   else{
     // Si no existe el usuario en BDD
-    responseHandler.sendResponse(req,res,next, 401, 'User not found');
+    responseHandler.sendResponse(req,res,next, 400, 'User not found');
   }
 });
 

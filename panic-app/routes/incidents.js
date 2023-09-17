@@ -14,7 +14,7 @@ const { json } = require('sequelize');
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024, // limit file size to 5MB
+    fileSize: 5 * 1024 * 1024, // Tamaño máximo de archivo 5MB
   },
 });
 
@@ -36,7 +36,11 @@ router.post('/start', sessionUtils.validateSession, (req, res , next)=>{
         console.log(hasContacts);
 
         if(!hasContacts){ // Si el usuario no tiene contactos registrados solo crea el incidente y termina la ejecución
-            responseHandler.sendResponse(req, res, next, 200, 'Incident ' + incident.id + ' successfully created. No contacts to notify.');
+            var resMsg = {
+                message: 'Incident successfully created. No contacts to notify.',
+                incidentId: incident.id
+            };
+            responseHandler.sendResponse(req, res, next, 200, resMsg);
             return;
         }
 
@@ -84,12 +88,13 @@ router.post('/start', sessionUtils.validateSession, (req, res , next)=>{
             });
 
     }).catch((error) => {
-        var resMsg = "Failed to insert record to database: " + error.original.code;
+        console.log(error)
+        var resMsg = "Failed to insert record to database";
         responseHandler.sendResponse(req, res, next, 500, resMsg);
     });
 });
 
-// Actualiza la localización del usuario
+// Actualiza los datos de geolocalización del usuario
 router.post('/refresh', sessionUtils.validateSession, (req, res , next)=>{
     var userId = req.session.userId;
 
@@ -104,7 +109,7 @@ router.post('/refresh', sessionUtils.validateSession, (req, res , next)=>{
 
     // Obtiene el incidente con el ID recibido
     var incident = incidentController.getIncident(incidentId).then((giRes) => {
-        // Actualiza la actualización relacionada al incidente
+        // Actualiza los datos de geolocalización relacionados al incidente
 
         if(giRes.length === 0){ // Si no existen incidentes con el ID recibido...
             responseHandler.sendResponse(req, res, next, 400, 'Non-existent incident');
@@ -115,14 +120,16 @@ router.post('/refresh', sessionUtils.validateSession, (req, res , next)=>{
             responseHandler.sendResponse(req, res, next, 200, 'Location updated successfully');
         })
         .catch((error) => {
-            var resMsg = "Update record failed: " + error.original.code;
+            console.log(error);
+            var resMsg = "Update record failed";
             responseHandler.sendResponse(req, res, next, 500, resMsg);
         });
 
         console.log(giRes);
     })
     .catch((error) => {
-        var resMsg = "Failed to retrieve record from database: " + error.original.code;
+        console.log(error);
+        var resMsg = "Failed to retrieve record from database";
         responseHandler.sendResponse(req,res,next, 500, resMsg);
     });
 
@@ -311,7 +318,7 @@ router.post('/list', sessionUtils.validateSession, (req, res , next)=>{
 });
 
 
-// Obtiene una lista de todos los reportes de incidentes levantados por el usuario
+// Obtiene una lista de todos los reportes de incidentes levantados por un usuario
 router.get('/list', sessionUtils.validateSession, (req, res , next)=>{
     var userId = req.session.userId;
 

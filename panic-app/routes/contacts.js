@@ -69,7 +69,8 @@ router.post('/register', sessionUtils.validateSession, (req, res , next)=>{
                 responseHandler.sendResponse(req, res, next, 200, 'Contact successfully registered');
               })
               .catch((error) => { // Error al actualizar contacto en BD con el SNS Topic
-                var resMsg = "Failed to update record with SNS topic: " + error.original.code;
+                console.log(error)
+                var resMsg = "Failed to update record with SNS topic";
                 responseHandler.sendResponse(req, res, next, 500, resMsg);
               });
           
@@ -86,18 +87,20 @@ router.post('/register', sessionUtils.validateSession, (req, res , next)=>{
           });
 
       }).catch((error) => { // Error al crear contacto en BD
-        var resMsg = "Failed to insert record to database: " + error.original.code;
+        console.log(error)
+        var resMsg = "Failed to insert record to database";
         responseHandler.sendResponse(req, res, next, 500, resMsg);
       });
     }
   }).catch((error) => { // Error al intentar buscar contacto en BD
-    var resMsg = "Failed to retrieve record from database: " + error.original.code;
+    console.log(error)
+    var resMsg = "Failed to retrieve record from database";
     responseHandler.sendResponse(req,res,next, 500, resMsg);
   });
 
 });
 
-// Registra un contacto de confianza asociado a un usuario
+// Edita el número o nombre de un contacto de confianza
 router.post('/edit', sessionUtils.validateSession, (req, res , next)=>{
   var userId = req.session.userId;
 
@@ -162,7 +165,7 @@ router.post('/edit', sessionUtils.validateSession, (req, res , next)=>{
 
 });
 
-// Registra un contacto de confianza asociado a un usuario
+// Elimina un contacto de confianza asociado a un usuario
 router.delete('/:contactPhone', sessionUtils.validateSession, (req, res , next)=>{
   var userId = req.session.userId;
 
