@@ -68,9 +68,10 @@ router.post('/start', sessionUtils.validateSession, (req, res , next)=>{
         }
         
         // Envía petición al middleware de la plataforma web para notificar a contactos de confianza
-        axios.post('http://httpbin.org/post', reqBody)
+        axios.post('https://api.safetyguard.com.mx/incidents/notificate/contacts', reqBody)
             .then(function (calloutRes) {
-                if(calloutRes.status === 200){
+                console.log(calloutRes.data);
+                if(calloutRes.status === 201){
                     var resMsg = {
                         message: 'Incident successfully created',
                         incidentId: incident.id

@@ -49,20 +49,16 @@ router.post('/register', sessionUtils.validateSession, (req, res , next)=>{
         }
 
         // Envía petición para dar de alta al contacto en AWS SNS
-        axios.post('http://httpbin.org/post', reqBody)
+        axios.post('https://api.safetyguard.com.mx/sns/create', reqBody)
           .then(function (calloutRes) {
-            if (calloutRes.status === 200) { // Alta en AWS exitosa
-              // console.log('RESPONSE DATA \n:', calloutRes.data);
+            if (calloutRes.status === 201) { // Alta en AWS exitosa
+              // console.log('Create SNS Topic Response \n:', calloutRes.data);
 
-              // Verifica que la respuesta contenga el tópico SNS  
-              //----------------------------------------------------------------------------DESCOMENTAR
-              // if(!calloutRes.data.TopicArn){
-              //   responseHandler.sendResponse(req, res, next, 500, 'Could not create SNS topic');
-              //   return;
-              // }
-
-              // ----------------------------------------------------------------------------ELIMINAR
-              calloutRes.data.TopicArn = 'arn:aws:sns:us-east-2:402433848122:SNS-Topic-SNS-Topic-2c838594-d317-4042-8f16-8a75e5bcf594';
+              // Verifica que la respuesta contenga el tópico SNS
+              if(!calloutRes.data.TopicArn){
+                responseHandler.sendResponse(req, res, next, 500, 'Could not create SNS topic');
+                return;
+              }
 
               // Actualiza el contacto en BD para agregar el SNS Topic generado
               contactController.updateSNSTopic(contact.id, calloutRes.data.TopicArn).then((updRes) => {
