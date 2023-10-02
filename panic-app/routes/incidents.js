@@ -14,7 +14,7 @@ const { json } = require('sequelize');
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024, // Tamaño máximo de archivo 5MB
+    fileSize: 100 * 1024 * 1024, // Tamaño máximo de archivo 100MB
   },
 });
 

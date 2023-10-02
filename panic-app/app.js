@@ -33,14 +33,14 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 
-const sessionMaxAge = 1000 * 60 * 60 * 24; // La sesión expira en 24 horas
+const sessionMaxAge = 1000 * 60 * 60 * 24 * 7; // La sesión expira en 24 horas
 const sessionStore = new mySQLStore(config);
 
 app.use(sessions({
   secret: process.env.SESSION_SECRET,
   saveUninitialized:false,
   resave: false,
-  cookie: { maxAge: sessionMaxAge, secure: true },
+  cookie: { maxAge: sessionMaxAge },
   store: sessionStore
 }));
 

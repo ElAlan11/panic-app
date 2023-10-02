@@ -6,7 +6,7 @@
 
 var app = require('../app');
 var debug = require('debug')('panicappapi:server');
-var https = require('https');
+var http = require('http');
 const fs = require("fs");
 
 /**
@@ -20,10 +20,7 @@ app.set('port', port);
  * Create HTTP server.
  */
 
-var server = https.createServer({
-  key: fs.readFileSync("privatekey.pem"),
-  cert: fs.readFileSync("fullchain.pem"),
-}, app);
+var server = http.createServer(app);
 
 /**
  * Listen on provided port, on all network interfaces.
