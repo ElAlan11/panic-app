@@ -202,4 +202,27 @@ router.delete('/:contactPhone', sessionUtils.validateSession, (req, res , next)=
 
 });
 
+
+// Obtiene una lista de los contactos de confianza del usuario
+router.get('/list', sessionUtils.validateSession, (req, res , next)=>{
+  var userId = req.session.userId;
+  console.log('hola');
+
+  // Consulta contactos de confianza por userId
+  contactController.getTrustedContacts(userId).then((contacts)=>{
+    console.log(contacts);
+    if(contacts.length === 0){ // Si no se encontraron contactos
+        responseHandler.sendResponse(req,res,next, 204, 'No contacts found');
+        return;
+    }
+    
+    responseHandler.sendResponse(req,res,next, 200, contacts);
+  })
+  .catch((error)=>{
+      console.log(error);
+      responseHandler.sendResponse(req,res,next, 500, 'Failed to retrieve records from database');
+  });
+
+});
+
 module.exports = router;
