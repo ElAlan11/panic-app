@@ -4,6 +4,8 @@ const axios = require('axios');
 var sessionUtils = require('../utils/session-checker.util');
 var responseHandler = require('../utils/response-handler.util');
 var s3Util = require('../utils/aws-s3.util');
+var ann = require('../utils/neural-network.util');
+
 const incidentController = require('../controllers/incident-controller');
 const incPhotoController = require('../controllers/incidentphoto-controller');
 const inCatController = require('../controllers/incidentcategory-controller');
@@ -71,6 +73,7 @@ router.post('/start', sessionUtils.validateSession, (req, res , next)=>{
         axios.post('https://api.safetyguard.com.mx/incidents/notificate/contacts', reqBody)
             .then(function (calloutRes) {
                 console.log(calloutRes.data);
+                console.log(reqBody);
                 if(calloutRes.status === 201){
                     var resMsg = {
                         message: 'Incident successfully created',
@@ -292,6 +295,17 @@ router.post('/list', sessionUtils.validateSession, (req, res , next)=>{
     var latitude = parseFloat(req.body.latitude);
     var longitude = parseFloat(req.body.longitude);
 
+    // Predice el nivel de peligro
+    var toPredict = [];
+    const d = new Date();
+
+    toPredict.push([latitude,longitude,d.getHours()]);
+    var prediction = ann.predict(toPredict)[0];
+    console.log(prediction);
+    
+    var predCat = prediction > 0.8 ? 2 : prediction > 0.5 ? 1 : 0;
+    console.log(predCat) 
+
     // Obtiene los grados equivalentes a 1km para la latitud recibida
     var degreesPerKm = degreesPerKilometer(latitude); 
 
@@ -305,11 +319,15 @@ router.post('/list', sessionUtils.validateSession, (req, res , next)=>{
     // Consulta reportes de incidentes recientes en el área
     incidentController.getIncidentsInArea(maxLatNorth, maxLatSouth, maxLongEast, maxLongWest).then((incidents)=>{
         if(incidents.length === 0){ // Si no se encontraron reportes...
-            responseHandler.sendResponse(req,res,next, 204, 'No reports of incidents in the area');
+            responseHandler.sendResponse(req,res,next, 200, {riskLevel: predCat});
             return;
         }
-
-        responseHandler.sendResponse(req,res,next, 200, incidents);
+        
+        var responseJson = {
+            incidents: incidents,
+            riskLevel: predCat
+        }
+        responseHandler.sendResponse(req,res,next, 200, responseJson);
     })
     .catch((error)=>{
         console.log(error);
